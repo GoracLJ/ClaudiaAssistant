@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaudiaAssistant</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --bg-panel: #ffffff;
+    --bg-sunken: #f2f0ec;
+    --text: #2a2620;
+    --text-dim: #79736a;
+    --border: #e5e1d8;
+    --accent: #b5652f;
+    --accent-hover: #9a5527;
+    --accent-soft: #f3e4d7;
+    --danger: #b3402f;
+    --good: #4c7a4c;
+    --shadow: 0 1px 3px rgba(30,25,15,0.08), 0 1px 2px rgba(30,25,15,0.06);
+    --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1a17;
+      --bg-panel: #242220;
+      --bg-sunken: #2c2a26;
+      --text: #ece8e0;
+      --text-dim: #a39c8f;
+      --border: #3a372f;
+      --accent: #d98a52;
+      --accent-hover: #e6996020;
+      --accent-soft: #3a2c1f;
+      --danger: #e0796a;
+      --good: #7fb37f;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-panel);
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  header h1 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  header .actions { display: flex; gap: 6px; align-items: center; }
+  #sync-status { font-size: 11px; color: var(--text-dim); margin-right: 4px; white-space: nowrap; }
+  button.iconbtn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+    font-family: var(--font);
+  }
+  button.iconbtn:hover { background: var(--bg-sunken); color: var(--text); }
+
+  #app {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+  #sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--bg-panel);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 14px;
+    gap: 20px;
+  }
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin: 0 0 8px 0;
+  }
+  .card {
+    background: var(--bg-sunken);
+    border-radius: var(--radius);
+    padding: 10px;
+  }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border-radius: 6px;
+  }
+  .item-row:hover { background: rgba(128,128,128,0.08); }
+  .item-row input[type=checkbox] {
+    width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--accent); cursor: pointer;
+  }
+  .item-row .label { flex: 1; font-size: 13.5px; word-break: break-word; }
+  .item-row.done .label { text-decoration: line-through; color: var(--text-dim); }
+  .item-row .del {
+    opacity: 0; background: none; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 13px; padding: 2px 5px;
+  }
+  .item-row:hover .del { opacity: 1; }
+  .item-row .del:hover { color: var(--danger); }
+  .habit-streak {
+    font-size: 11px; color: var(--accent); font-weight: 600; flex-shrink: 0;
+    background: var(--accent-soft); padding: 1px 6px; border-radius: 10px;
+  }
+  .add-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .add-row input {
+    flex: 1; min-width: 90px; font-family: var(--font); font-size: 13px; padding: 6px 8px;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--bg-panel); color: var(--text);
+  }
+  .add-row select {
+    font-family: var(--font); font-size: 12.5px; padding: 6px 6px;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--bg-panel); color: var(--text);
+    max-width: 110px;
+  }
+  .add-row button {
+    border: 1px solid var(--border); background: var(--bg-panel); color: var(--text);
+    border-radius: 7px; padding: 6px 10px; cursor: pointer; font-size: 13px;
+  }
+  .add-row button:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .empty-hint { font-size: 12.5px; color: var(--text-dim); padding: 4px; }
+
+  .task-filter-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .task-filter-row select {
+    flex: 1; font-family: var(--font); font-size: 12.5px; padding: 5px 6px;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--bg-panel); color: var(--text);
+  }
+  .task-group-header {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-dim); padding: 8px 4px 3px; }
+  .task-group-header:first-child { padding-top: 2px; }
+
+  /* Chat */
+  #chat-scroll {
+    flex: 1; overflow-y: auto; padding: 20px 0;
+  }
+  #chat-inner { max-width: 720px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+  .msg .role { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+  .msg.user .role { color: var(--accent); }
+  .msg .bubble { font-size: 14.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .msg.assistant .bubble { color: var(--text); }
+  .msg.user .bubble { color: var(--text); }
+  .msg.error .bubble { color: var(--danger); }
+  .typing { display: flex; gap: 4px; padding: 4px 0; }
+  .typing span {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim);
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+
+  #composer {
+    border-top: 1px solid var(--border);
+    background: var(--bg-panel);
+    padding: 12px 20px;
+    flex-shrink: 0;
+  }
+  #composer-inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end; }
+  #composer textarea {
+    flex: 1; resize: none; font-family: var(--font); font-size: 14px;
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-sunken); color: var(--text); max-height: 140px; line-height: 1.4;
+  }
+  #composer textarea:focus { outline: none; border-color: var(--accent); }
+  #send-btn {
+    background: var(--accent); color: #fff; border: none; border-radius: var(--radius);
+    padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; flex-shrink: 0;
+  }
+  #send-btn:hover { background: var(--accent-hover); }
+  #send-btn:disabled { opacity: 0.5; cursor: default; }
+  #composer-hint { max-width: 720px; margin: 6px auto 0; font-size: 11px; color: var(--text-dim); }
+
+  /* Welcome / setup */
+  #welcome { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .welcome-card { max-width: 420px; text-align: left; }
+  .welcome-card h2 { font-size: 18px; margin: 0 0 8px; }
+  .welcome-card p { font-size: 13.5px; color: var(--text-dim); line-height: 1.5; margin: 0 0 16px; }
+
+  /* Settings modal */
+  #overlay {
+    position: fixed; inset: 0; background: rgba(20,17,10,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+  }
+  #overlay.open { display: flex; }
+  #settings-modal {
+    background: var(--bg-panel); border-radius: 14px; padding: 22px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto;
+  }
+  #settings-modal h2 { font-size: 16px; margin: 0 0 4px; }
+  #settings-modal .sub { font-size: 12.5px; color: var(--text-dim); margin: 0 0 16px; line-height: 1.5; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: var(--text-dim); }
+  .field input, .field select {
+    width: 100%; font-family: var(--font); font-size: 13.5px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--bg-sunken); color: var(--text);
+  }
+  .field .note { font-size: 11px; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none; border-radius: 7px;
+    padding: 8px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary {
+    background: none; border: 1px solid var(--border); color: var(--text);
+    border-radius: 7px; padding: 8px 14px; font-size: 13.5px; cursor: pointer;
+  }
+  .btn-secondary:hover { background: var(--bg-sunken); }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  @media (max-width: 720px) {
+    #sidebar { position: fixed; top: 45px; bottom: 0; left: 0; width: 260px; z-index: 30;
+      transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: var(--shadow); }
+    #sidebar.open { transform: translateX(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="dot"></span> ClaudiaAssistant</h1>
+  <div class="actions">
+    <span id="sync-status" style="display:none;"></span>
+    <button class="iconbtn" id="sync-now-btn" style="display:none;">Sync now</button>
+    <button class="iconbtn" id="menu-btn" style="display:none;">☰ Lists</button>
+    <button class="iconbtn" id="clear-chat-btn">Clear chat</button>
+    <button class="iconbtn" id="settings-btn">Settings</button>
+  </div>
+</header>
+
+<div id="app">
+  <aside id="sidebar">
+    <div>
+      <div class="panel-title">Today's Tasks</div>
+      <div class="card" id="tasks-card">
+        <div class="task-filter-row">
+          <select id="task-filter-select"></select>
+          <button class="iconbtn" id="delete-project-btn" style="display:none;">Delete project</button>
+        </div>
+        <div id="tasks-list"></div>
+        <div class="add-row">
+          <input type="text" id="task-input" placeholder="Add a task…" maxlength="200">
+          <select id="task-tag-select"></select>
+          <button id="task-add-btn">Add</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-title">Habits</div>
+      <div class="card" id="habits-card">
+        <div id="habits-list"></div>
+        <div class="add-row">
+          <input type="text" id="habit-input" placeholder="Add a habit…" maxlength="200">
+          <button id="habit-add-btn">Add</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-title">Backup</div>
+      <div class="card" style="display:flex; gap:6px;">
+        <button class="iconbtn" id="export-btn" style="flex:1;">Export data</button>
+        <button class="iconbtn" id="import-btn" style="flex:1;">Import data</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json" style="display:none;">
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="welcome">
+      <div class="welcome-card">
+        <h2>Set up your assistant</h2>
+        <p>This is a personal daily-planning assistant that talks to Claude directly from your browser. To use it you'll need an Anthropic API key — add one in Settings to get started.</p>
+        <button class="btn-primary" id="welcome-settings-btn">Open Settings</button>
+      </div>
+    </div>
+
+    <div id="chat-scroll" style="display:none;">
+      <div id="chat-inner"></div>
+    </div>
+
+    <div id="composer" style="display:none;">
+      <div id="composer-inner">
+        <textarea id="msg-input" rows="1" placeholder="Ask about your day, plan something, check in on a habit…"></textarea>
+        <button id="send-btn">Send</button>
+      </div>
+      <div id="composer-hint">Enter to send · Shift+Enter for a new line</div>
+    </div>
+  </main>
+</div>
+
+<div id="overlay">
+  <div id="settings-modal">
+    <h2>Settings</h2>
+    <p class="sub">Your API key and data are stored only in this browser's local storage — never sent anywhere except directly to Anthropic's API when you send a message.</p>
+
+    <div class="field">
+      <label for="api-key-input">Anthropic API key</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-...">
+      <div class="note">Get one at <strong>console.anthropic.com</strong> → API Keys. Usage is billed per request on your Anthropic account.</div>
+    </div>
+
+    <div class="field">
+      <label for="model-input">Model</label>
+      <input type="text" id="model-input" placeholder="claude-haiku-4-5">
+      <div class="note">Defaults to Claude Haiku — the cheapest current model — to keep costs low for daily chat. Swap in <code>claude-sonnet-5</code> for better quality at a higher price if you want. If a model name stops working, check platform.claude.com/docs for the current list.</div>
+    </div>
+
+    <div class="field">
+      <label for="persona-input">How should it act? (optional)</label>
+      <input type="text" id="persona-input" placeholder="e.g. concise, encouraging, no fluff">
+    </div>
+
+    <div class="field" style="border-top: 1px solid var(--border); padding-top: 14px;">
+      <label for="github-token-input">Sync across devices (optional)</label>
+      <input type="password" id="github-token-input" placeholder="GitHub personal access token">
+      <div class="note">
+        Lets this app store your tasks, habits and chat in a private GitHub Gist and pull them in on every device where you paste the <em>same</em> token — no manual copying needed.
+        Create one at <strong>github.com/settings/tokens</strong> → "Generate new token (classic)" → tick only the <strong>gist</strong> scope. Leave blank to keep this device local-only.
+      </div>
+    </div>
+
+    <div class="field" id="sync-key-field" style="display:none;">
+      <label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer;">
+        <input type="checkbox" id="sync-apikey-checkbox" style="width:auto;">
+        Also sync my Anthropic API key across devices
+      </label>
+      <div class="note">Off by default — your Anthropic key stays only on this device unless you turn this on. If on, it's stored in the same private Gist as everything else.</div>
+    </div>
+
+    <div class="field" id="sync-status-field" style="display:none;">
+      <div class="note" id="settings-sync-status">Not synced yet.</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="settings-cancel-btn">Cancel</button>
+      <button class="btn-primary" id="settings-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORE_KEY = "daily_assistant_state_v1";
+
+  function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORE_KEY); } catch (e) {}
+    var defaults = {
+      apiKey: "",
+      model: "claude-haiku-4-5",
+      persona: "",
+      tasks: [],       // {id, text, done, createdDate, tag}
+      habits: [],      // {id, text, doneDates: ["YYYY-MM-DD", ...]}
+      messages: [],     // {role: "user"|"assistant", content: string}
+      tags: [],         // ["Work", "Home", ...] — project/job labels tasks can be filed under
+      updatedAt: 0,
+      githubToken: "",
+      gistId: "",
+      syncApiKey: false
+    };
+    if (!raw) return defaults;
+    try {
+      var parsed = JSON.parse(raw);
+      for (var k in defaults) if (!(k in parsed)) parsed[k] = defaults[k];
+      return parsed;
+    } catch (e) { return defaults; }
+  }
+
+  var state = loadState();
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {
+      console.warn("Could not save to localStorage", e);
+    }
+  }
+
+  function touch() { state.updatedAt = Date.now(); }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---------- DOM refs ----------
+  var el = {
+    welcome: document.getElementById("welcome"),
+    chatScroll: document.getElementById("chat-scroll"),
+    chatInner: document.getElementById("chat-inner"),
+    composer: document.getElementById("composer"),
+    msgInput: document.getElementById("msg-input"),
+    sendBtn: document.getElementById("send-btn"),
+    clearChatBtn: document.getElementById("clear-chat-btn"),
+    settingsBtn: document.getElementById("settings-btn"),
+    welcomeSettingsBtn: document.getElementById("welcome-settings-btn"),
+    overlay: document.getElementById("overlay"),
+    apiKeyInput: document.getElementById("api-key-input"),
+    modelInput: document.getElementById("model-input"),
+    personaInput: document.getElementById("persona-input"),
+    settingsSave: document.getElementById("settings-save-btn"),
+    settingsCancel: document.getElementById("settings-cancel-btn"),
+    tasksList: document.getElementById("tasks-list"),
+    taskInput: document.getElementById("task-input"),
+    taskAddBtn: document.getElementById("task-add-btn"),
+    taskFilterSelect: document.getElementById("task-filter-select"),
+    taskTagSelect: document.getElementById("task-tag-select"),
+    deleteProjectBtn: document.getElementById("delete-project-btn"),
+    habitsList: document.getElementById("habits-list"),
+    habitInput: document.getElementById("habit-input"),
+    habitAddBtn: document.getElementById("habit-add-btn"),
+    exportBtn: document.getElementById("export-btn"),
+    importBtn: document.getElementById("import-btn"),
+    importFile: document.getElementById("import-file"),
+    menuBtn: document.getElementById("menu-btn"),
+    sidebar: document.getElementById("sidebar"),
+    syncStatusHeader: document.getElementById("sync-status"),
+    syncNowBtn: document.getElementById("sync-now-btn"),
+    githubTokenInput: document.getElementById("github-token-input"),
+    syncKeyField: document.getElementById("sync-key-field"),
+    syncApiKeyCheckbox: document.getElementById("sync-apikey-checkbox"),
+    syncStatusField: document.getElementById("sync-status-field"),
+    settingsSyncStatus: document.getElementById("settings-sync-status")
+  };
+
+  // ---------- Settings modal ----------
+  function openSettings() {
+    el.apiKeyInput.value = state.apiKey || "";
+    el.modelInput.value = state.model || "claude-haiku-4-5";
+    el.personaInput.value = state.persona || "";
+    el.githubTokenInput.value = state.githubToken || "";
+    el.syncApiKeyCheckbox.checked = !!state.syncApiKey;
+    el.syncKeyField.style.display = state.githubToken ? "block" : "none";
+    el.syncStatusField.style.display = state.githubToken ? "block" : "none";
+    el.overlay.classList.add("open");
+  }
+  function closeSettings() { el.overlay.classList.remove("open"); }
+
+  el.settingsBtn.addEventListener("click", openSettings);
+  el.welcomeSettingsBtn.addEventListener("click", openSettings);
+  el.settingsCancel.addEventListener("click", closeSettings);
+  el.overlay.addEventListener("click", function (e) { if (e.target === el.overlay) closeSettings(); });
+  el.githubTokenInput.addEventListener("input", function () {
+    var has = !!el.githubTokenInput.value.trim();
+    el.syncKeyField.style.display = has ? "block" : "none";
+    el.syncStatusField.style.display = has ? "block" : "none";
+  });
+
+  el.settingsSave.addEventListener("click", function () {
+    var tokenChanged = el.githubTokenInput.value.trim() !== (state.githubToken || "");
+    state.apiKey = el.apiKeyInput.value.trim();
+    state.model = el.modelInput.value.trim() || "claude-haiku-4-5";
+    state.persona = el.personaInput.value.trim();
+    state.githubToken = el.githubTokenInput.value.trim();
+    state.syncApiKey = el.syncApiKeyCheckbox.checked;
+    if (tokenChanged) state.gistId = ""; // re-discover gist for a new token
+    touch();
+    save();
+    closeSettings();
+    refreshMainView();
+    if (state.githubToken) pullState().then(function () { scheduleSync(true); });
+  });
+
+  function refreshMainView() {
+    var ready = !!state.apiKey;
+    el.welcome.style.display = ready ? "none" : "flex";
+    el.chatScroll.style.display = ready ? "block" : "none";
+    el.composer.style.display = ready ? "block" : "none";
+    if (window.innerWidth <= 720) el.menuBtn.style.display = ready ? "inline-block" : "none";
+    el.syncStatusHeader.style.display = state.githubToken ? "inline" : "none";
+    el.syncNowBtn.style.display = state.githubToken ? "inline-block" : "none";
+  }
+
+  // ---------- Tasks + projects (tags) ----------
+  var NEW_TAG_VALUE = "__new__";
+  var currentTaskFilter = "all";
+
+  function addNewTag_(name) {
+    name = (name || "").trim();
+    if (!name) return null;
+    var existing = state.tags.filter(function (t) { return t.toLowerCase() === name.toLowerCase(); })[0];
+    if (existing) return existing;
+    state.tags.push(name);
+    touch(); save(); scheduleSync();
+    return name;
+  }
+
+  function populateTagSelects() {
+    // Add-row select: choose a project for the task being created, or make a new one.
+    var prevAddVal = el.taskTagSelect.value;
+    el.taskTagSelect.innerHTML = "";
+    el.taskTagSelect.appendChild(new Option("No project", ""));
+    state.tags.forEach(function (t) { el.taskTagSelect.appendChild(new Option(t, t)); });
+    el.taskTagSelect.appendChild(new Option("+ New project…", NEW_TAG_VALUE));
+    if (Array.prototype.some.call(el.taskTagSelect.options, function (o) { return o.value === prevAddVal; })) {
+      el.taskTagSelect.value = prevAddVal;
+    }
+
+    // Filter select: view all tasks, just one project, or the no-project bucket.
+    var prevFilterVal = el.taskFilterSelect.value || currentTaskFilter;
+    el.taskFilterSelect.innerHTML = "";
+    el.taskFilterSelect.appendChild(new Option("All tasks", "all"));
+    if (state.tasks.some(function (t) { return !t.tag; })) {
+      el.taskFilterSelect.appendChild(new Option("No project", "__none__"));
+    }
+    state.tags.forEach(function (t) { el.taskFilterSelect.appendChild(new Option(t, t)); });
+    var stillExists = Array.prototype.some.call(el.taskFilterSelect.options, function (o) { return o.value === prevFilterVal; });
+    currentTaskFilter = stillExists ? prevFilterVal : "all";
+    el.taskFilterSelect.value = currentTaskFilter;
+    el.deleteProjectBtn.style.display = (currentTaskFilter !== "all" && currentTaskFilter !== "__none__") ? "inline-block" : "none";
+  }
+
+  el.taskTagSelect.addEventListener("change", function () {
+    if (el.taskTagSelect.value !== NEW_TAG_VALUE) return;
+    var name = window.prompt("New project name:");
+    var created = addNewTag_(name);
+    populateTagSelects();
+    el.taskTagSelect.value = created || "";
+  });
+
+  el.taskFilterSelect.addEventListener("change", function () {
+    currentTaskFilter = el.taskFilterSelect.value;
+    el.deleteProjectBtn.style.display = (currentTaskFilter !== "all" && currentTaskFilter !== "__none__") ? "inline-block" : "none";
+    renderTasks();
+  });
+
+  el.deleteProjectBtn.addEventListener("click", function () {
+    if (currentTaskFilter === "all" || currentTaskFilter === "__none__") return;
+    var tagName = currentTaskFilter;
+    if (!confirm('Delete project "' + tagName + '"? Its tasks stay, just without a project.')) return;
+    state.tags = state.tags.filter(function (t) { return t !== tagName; });
+    state.tasks.forEach(function (t) { if (t.tag === tagName) t.tag = ""; });
+    currentTaskFilter = "all";
+    touch(); save(); scheduleSync();
+    populateTagSelects();
+    renderTasks();
+  });
+
+  function visibleTasks_() {
+    if (currentTaskFilter === "all") return state.tasks;
+    if (currentTaskFilter === "__none__") return state.tasks.filter(function (t) { return !t.tag; });
+    return state.tasks.filter(function (t) { return t.tag === currentTaskFilter; });
+  }
+
+  function renderTaskRow_(t, container) {
+    var row = document.createElement("div");
+    row.className = "item-row" + (t.done ? " done" : "");
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!t.done;
+    cb.addEventListener("change", function () {
+      t.done = cb.checked;
+      touch(); save(); scheduleSync();
+      renderTasks();
+    });
+    var label = document.createElement("div");
+    label.className = "label";
+    label.textContent = t.text;
+    var del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "✕";
+    del.addEventListener("click", function () {
+      state.tasks = state.tasks.filter(function (x) { return x.id !== t.id; });
+      touch(); save(); scheduleSync();
+      populateTagSelects();
+      renderTasks();
+    });
+    row.appendChild(cb);
+    row.appendChild(label);
+    row.appendChild(del);
+    container.appendChild(row);
+  }
+
+  function renderTasks() {
+    el.tasksList.innerHTML = "";
+    var visible = visibleTasks_();
+    if (visible.length === 0) {
+      var hint = document.createElement("div");
+      hint.className = "empty-hint";
+      hint.textContent = state.tasks.length === 0 ? "Nothing on your list yet." : "Nothing here.";
+      el.tasksList.appendChild(hint);
+      return;
+    }
+
+    if (currentTaskFilter !== "all") {
+      visible.forEach(function (t) { renderTaskRow_(t, el.tasksList); });
+      return;
+    }
+
+    // "All tasks" view: group by project so it reads as organized-by-job.
+    var groups = state.tags.map(function (tag) { return { tag: tag, items: visible.filter(function (t) { return t.tag === tag; }) }; });
+    groups.push({ tag: "", items: visible.filter(function (t) { return !t.tag; }) });
+    groups.forEach(function (g) {
+      if (g.items.length === 0) return;
+      if (state.tags.length > 0) {
+        var header = document.createElement("div");
+        header.className = "task-group-header";
+        header.textContent = g.tag || "No project";
+        el.tasksList.appendChild(header);
+      }
+      g.items.forEach(function (t) { renderTaskRow_(t, el.tasksList); });
+    });
+  }
+
+  function addTask() {
+    var v = el.taskInput.value.trim();
+    if (!v) return;
+    var tag = el.taskTagSelect.value === NEW_TAG_VALUE ? "" : el.taskTagSelect.value;
+    state.tasks.push({ id: uid(), text: v, done: false, createdDate: todayStr(), tag: tag });
+    el.taskInput.value = "";
+    touch(); save(); scheduleSync();
+    populateTagSelects();
+    renderTasks();
+  }
+  el.taskAddBtn.addEventListener("click", addTask);
+  el.taskInput.addEventListener("keydown", function (e) { if (e.key === "Enter") addTask(); });
+
+  // ---------- Habits ----------
+  function habitStreak(h) {
+    var dates = (h.doneDates || []).slice().sort();
+    if (dates.length === 0) return 0;
+    var set = {};
+    dates.forEach(function (d) { set[d] = true; });
+    var cursor = new Date();
+    var streak = 0;
+    // if not done today, streak counts back from yesterday (still "alive")
+    var cursorStr = todayStr();
+    if (!set[cursorStr]) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    while (true) {
+      var y = cursor.getFullYear(), m = String(cursor.getMonth() + 1).padStart(2, "0"), d = String(cursor.getDate()).padStart(2, "0");
+      var ds = y + "-" + m + "-" + d;
+      if (set[ds]) { streak++; cursor.setDate(cursor.getDate() - 1); } else { break; }
+    }
+    return streak;
+  }
+
+  function renderHabits() {
+    el.habitsList.innerHTML = "";
+    if (state.habits.length === 0) {
+      var hint = document.createElement("div");
+      hint.className = "empty-hint";
+      hint.textContent = "No habits tracked yet.";
+      el.habitsList.appendChild(hint);
+    }
+    var today = todayStr();
+    state.habits.forEach(function (h) {
+      var doneToday = (h.doneDates || []).indexOf(today) !== -1;
+      var row = document.createElement("div");
+      row.className = "item-row" + (doneToday ? " done" : "");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = doneToday;
+      cb.addEventListener("change", function () {
+        h.doneDates = h.doneDates || [];
+        if (cb.checked) {
+          if (h.doneDates.indexOf(today) === -1) h.doneDates.push(today);
+        } else {
+          h.doneDates = h.doneDates.filter(function (d) { return d !== today; });
+        }
+        touch(); save(); scheduleSync();
+        renderHabits();
+      });
+      var label = document.createElement("div");
+      label.className = "label";
+      label.textContent = h.text;
+      var streak = document.createElement("div");
+      streak.className = "habit-streak";
+      var s = habitStreak(h);
+      streak.textContent = s > 0 ? (s + "🔥") : "0";
+      var del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.addEventListener("click", function () {
+        state.habits = state.habits.filter(function (x) { return x.id !== h.id; });
+        touch(); save(); scheduleSync();
+        renderHabits();
+      });
+      row.appendChild(cb);
+      row.appendChild(label);
+      row.appendChild(streak);
+      row.appendChild(del);
+      el.habitsList.appendChild(row);
+    });
+  }
+
+  function addHabit() {
+    var v = el.habitInput.value.trim();
+    if (!v) return;
+    state.habits.push({ id: uid(), text: v, doneDates: [] });
+    el.habitInput.value = "";
+    touch(); save(); scheduleSync();
+    renderHabits();
+  }
+  el.habitAddBtn.addEventListener("click", addHabit);
+  el.habitInput.addEventListener("keydown", function (e) { if (e.key === "Enter") addHabit(); });
+
+  // ---------- Export / Import ----------
+  el.exportBtn.addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "claudia-assistant-backup-" + todayStr() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+  el.importBtn.addEventListener("click", function () { el.importFile.click(); });
+  el.importFile.addEventListener("change", function () {
+    var file = el.importFile.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var parsed = JSON.parse(reader.result);
+        var keepToken = state.githubToken, keepGist = state.gistId, keepSyncKey = state.syncApiKey;
+        state = parsed;
+        if (!("githubToken" in parsed)) state.githubToken = keepToken;
+        if (!("gistId" in parsed)) state.gistId = keepGist;
+        if (!("syncApiKey" in parsed)) state.syncApiKey = keepSyncKey;
+        state.tags = state.tags || [];
+        touch();
+        save();
+        populateTagSelects();
+        renderTasks();
+        renderHabits();
+        renderChat();
+        refreshMainView();
+        scheduleSync();
+        alert("Data imported.");
+      } catch (e) {
+        alert("Couldn't read that file — is it a backup exported from this app?");
+      }
+    };
+    reader.readAsText(file);
+    el.importFile.value = "";
+  });
+
+  // ---------- Chat ----------
+  function renderChat() {
+    el.chatInner.innerHTML = "";
+    state.messages.forEach(function (m) {
+      appendMsgEl(m.role, m.content, false);
+    });
+    el.chatScroll.scrollTop = el.chatScroll.scrollHeight;
+  }
+
+  function appendMsgEl(role, content, scroll) {
+    var msg = document.createElement("div");
+    msg.className = "msg " + role;
+    var roleLabel = document.createElement("div");
+    roleLabel.className = "role";
+    roleLabel.textContent = role === "user" ? "You" : (role === "error" ? "Error" : "Assistant");
+    var bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = content;
+    msg.appendChild(roleLabel);
+    msg.appendChild(bubble);
+    el.chatInner.appendChild(msg);
+    if (scroll !== false) el.chatScroll.scrollTop = el.chatScroll.scrollHeight;
+    return msg;
+  }
+
+  function buildSystemPrompt() {
+    var today = new Date();
+    var dateStr = today.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    var taskLines = state.tasks.map(function (t) {
+      return "- [" + (t.done ? "x" : " ") + "] " + t.text + (t.tag ? " [" + t.tag + "]" : "");
+    }).join("\n") || "(none)";
+    var habitLines = state.habits.map(function (h) {
+      return "- " + h.text + " (current streak: " + habitStreak(h) + " days, done today: " + ((h.doneDates || []).indexOf(todayStr()) !== -1 ? "yes" : "no") + ")";
+    }).join("\n") || "(none)";
+
+    var persona = state.persona ? ("The user asked you to act like this: " + state.persona + "\n\n") : "";
+
+    return "You are a warm, practical personal daily assistant for the user. " +
+      "You help with planning the day, staying on top of tasks, keeping habits going, and general day-to-day thinking. " +
+      "Be concise and concrete rather than generic. Don't over-format with headers or bullet lists unless it genuinely helps; short prose is usually best for a chat like this.\n\n" +
+      persona +
+      "Today's date is " + dateStr + ".\n\n" +
+      "The user's current task list:\n" + taskLines + "\n\n" +
+      "The user's tracked habits:\n" + habitLines + "\n\n" +
+      "You can reference these naturally in conversation (e.g. nudge about an undone habit, help prioritize tasks), but you cannot directly edit them — if the user wants to add, complete, or remove something, tell them to use the sidebar checklist, or just acknowledge what they're doing.";
+  }
+
+  var sending = false;
+
+  function autoResize() {
+    el.msgInput.style.height = "auto";
+    el.msgInput.style.height = Math.min(el.msgInput.scrollHeight, 140) + "px";
+  }
+  el.msgInput.addEventListener("input", autoResize);
+  el.msgInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  el.sendBtn.addEventListener("click", sendMessage);
+
+  function sendMessage() {
+    if (sending) return;
+    var text = el.msgInput.value.trim();
+    if (!text) return;
+    if (!state.apiKey) { openSettings(); return; }
+
+    state.messages.push({ role: "user", content: text });
+    touch(); save(); scheduleSync();
+    appendMsgEl("user", text);
+    el.msgInput.value = "";
+    autoResize();
+
+    var typingEl = document.createElement("div");
+    typingEl.className = "typing";
+    typingEl.innerHTML = "<span></span><span></span><span></span>";
+    el.chatInner.appendChild(typingEl);
+    el.chatScroll.scrollTop = el.chatScroll.scrollHeight;
+
+    sending = true;
+    el.sendBtn.disabled = true;
+
+    var apiMessages = state.messages.map(function (m) {
+      return { role: m.role === "assistant" ? "assistant" : "user", content: m.content };
+    });
+
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": state.apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: state.model || "claude-haiku-4-5",
+        max_tokens: 1024,
+        system: buildSystemPrompt(),
+        messages: apiMessages
+      })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+      })
+      .then(function (result) {
+        typingEl.remove();
+        if (!result.ok) {
+          var errMsg = (result.data && result.data.error && result.data.error.message) || ("HTTP " + result.status);
+          appendMsgEl("error", "Couldn't reach Claude: " + errMsg);
+          return;
+        }
+        var textOut = "";
+        if (result.data.content && result.data.content.length) {
+          textOut = result.data.content.map(function (b) { return b.text || ""; }).join("");
+        }
+        state.messages.push({ role: "assistant", content: textOut });
+        touch(); save(); scheduleSync();
+        appendMsgEl("assistant", textOut);
+      })
+      .catch(function (err) {
+        typingEl.remove();
+        appendMsgEl("error", "Network error reaching the Anthropic API: " + err.message + ". If this keeps happening, your browser may be blocking the request — try a different browser, or check your API key and internet connection.");
+      })
+      .finally(function () {
+        sending = false;
+        el.sendBtn.disabled = false;
+      });
+  }
+
+  el.clearChatBtn.addEventListener("click", function () {
+    if (state.messages.length === 0) return;
+    if (!confirm("Clear the conversation? Your tasks and habits won't be affected.")) return;
+    state.messages = [];
+    touch(); save(); scheduleSync();
+    renderChat();
+  });
+
+  // ---------- Mobile sidebar toggle ----------
+  el.menuBtn.addEventListener("click", function () {
+    el.sidebar.classList.toggle("open");
+  });
+
+  // ---------- Cross-device sync (GitHub Gist as a private JSON store) ----------
+  var GIST_MARKER = "claudia-assistant-sync-v1";
+  var syncTimer = null;
+  var syncInFlight = false;
+
+  function setSyncStatus(text) {
+    el.syncStatusHeader.textContent = text;
+    el.settingsSyncStatus.textContent = text;
+  }
+
+  function ghHeaders(extra) {
+    var h = { "Authorization": "token " + state.githubToken, "Accept": "application/vnd.github+json" };
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+
+  function syncableSubset() {
+    var obj = {
+      model: state.model,
+      persona: state.persona,
+      tasks: state.tasks,
+      habits: state.habits,
+      messages: state.messages,
+      tags: state.tags,
+      updatedAt: state.updatedAt
+    };
+    if (state.syncApiKey) obj.apiKey = state.apiKey;
+    return obj;
+  }
+
+  function findOrCreateGist() {
+    return fetch("https://api.github.com/gists?per_page=100", { headers: ghHeaders() })
+      .then(function (r) { if (!r.ok) throw new Error("GitHub HTTP " + r.status); return r.json(); })
+      .then(function (gists) {
+        var found = (gists || []).find(function (g) { return g.description === GIST_MARKER; });
+        if (found) { state.gistId = found.id; save(); return found.id; }
+        return fetch("https://api.github.com/gists", {
+          method: "POST",
+          headers: ghHeaders({ "content-type": "application/json" }),
+          body: JSON.stringify({
+            description: GIST_MARKER,
+            public: false,
+            files: { "state.json": { content: JSON.stringify(syncableSubset()) } }
+          })
+        })
+          .then(function (r) { if (!r.ok) throw new Error("GitHub HTTP " + r.status); return r.json(); })
+          .then(function (g) { state.gistId = g.id; save(); return g.id; });
+      });
+  }
+
+  function pushState() {
+    if (!state.githubToken) return Promise.resolve();
+    setSyncStatus("Syncing…");
+    var p = state.gistId ? Promise.resolve(state.gistId) : findOrCreateGist();
+    return p
+      .then(function (id) {
+        return fetch("https://api.github.com/gists/" + id, {
+          method: "PATCH",
+          headers: ghHeaders({ "content-type": "application/json" }),
+          body: JSON.stringify({ files: { "state.json": { content: JSON.stringify(syncableSubset()) } } })
+        });
+      })
+      .then(function (r) { if (!r.ok) throw new Error("GitHub HTTP " + r.status); setSyncStatus("Synced just now"); })
+      .catch(function (e) { setSyncStatus("Sync error: " + e.message); });
+  }
+
+  function pullState() {
+    if (!state.githubToken) return Promise.resolve();
+    // If this device has never synced before (no cached gist id), any existing
+    // remote data must win outright — this device's local updatedAt is not a
+    // meaningful signal yet and must never be allowed to overwrite real data
+    // from other devices.
+    var isFirstConnect = !state.gistId;
+    setSyncStatus("Syncing…");
+    var p = state.gistId ? Promise.resolve(state.gistId) : findOrCreateGist();
+    return p
+      .then(function (id) {
+        return fetch("https://api.github.com/gists/" + id, { headers: ghHeaders() })
+          .then(function (r) { if (!r.ok) throw new Error("GitHub HTTP " + r.status); return r.json(); })
+          .then(function (g) {
+            var content = g.files && g.files["state.json"] && g.files["state.json"].content;
+            if (!content) return;
+            var remote;
+            try { remote = JSON.parse(content); } catch (e) { return; }
+            if (isFirstConnect || (remote.updatedAt || 0) > (state.updatedAt || 0)) {
+              state.model = remote.model || state.model;
+              state.persona = remote.persona || "";
+              state.tasks = remote.tasks || [];
+              state.habits = remote.habits || [];
+              state.messages = remote.messages || [];
+              state.tags = remote.tags || [];
+              state.updatedAt = remote.updatedAt || 0;
+              if (state.syncApiKey && remote.apiKey) state.apiKey = remote.apiKey;
+              save();
+              populateTagSelects();
+              renderTasks();
+              renderHabits();
+              renderChat();
+              refreshMainView();
+            }
+          });
+      })
+      .then(function () { setSyncStatus("Synced"); })
+      .catch(function (e) { setSyncStatus("Sync error: " + e.message); });
+  }
+
+  function scheduleSync(immediate) {
+    if (!state.githubToken) return;
+    if (syncTimer) clearTimeout(syncTimer);
+    setSyncStatus("Syncing…");
+    syncTimer = setTimeout(function () { pushState(); }, immediate ? 0 : 2000);
+  }
+
+  el.syncNowBtn.addEventListener("click", function () {
+    pullState().then(function () { return pushState(); });
+  });
+
+  // Pick up changes made on other devices as soon as you come back to this tab —
+  // otherwise a task added on your phone won't appear on your laptop until you
+  // manually reload the page.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && state.githubToken) pullState();
+  });
+  window.addEventListener("focus", function () {
+    if (state.githubToken) pullState();
+  });
+
+  // ---------- Init ----------
+  populateTagSelects();
+  renderTasks();
+  renderHabits();
+  renderChat();
+  refreshMainView();
+  if (state.githubToken) {
+    setSyncStatus("Syncing…");
+    pullState();
+  }
+})();
+</script>
+</body>
+</html>
