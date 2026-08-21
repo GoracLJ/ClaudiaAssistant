@@ -139,6 +139,17 @@
     font-size: 11px; color: var(--accent); font-weight: 600; flex-shrink: 0;
     background: var(--accent-soft); padding: 1px 6px; border-radius: 10px;
   }
+  .tag-chip {
+    font-size: 10.5px; flex-shrink: 0; border: 1px dashed var(--border); background: none;
+    color: var(--text-dim); padding: 1px 7px; border-radius: 10px; cursor: pointer;
+    font-family: var(--font); max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tag-chip.set { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .tag-chip:hover { color: var(--accent); border-color: var(--accent); }
+  .tag-inline-select {
+    font-size: 11px; flex-shrink: 0; max-width: 100px; border: 1px solid var(--accent);
+    border-radius: 7px; background: var(--bg-panel); color: var(--text); font-family: var(--font); padding: 1px 2px;
+  }
   .add-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
   .add-row input {
     flex: 1; min-width: 90px; font-family: var(--font); font-size: 13px; padding: 6px 8px;
@@ -590,6 +601,13 @@
     return state.tasks.filter(function (t) { return t.tag === currentTaskFilter; });
   }
 
+  function fillTagPickerOptions_(select, currentTag) {
+    select.appendChild(new Option("No project", ""));
+    state.tags.forEach(function (t) { select.appendChild(new Option(t, t)); });
+    select.appendChild(new Option("+ New project…", NEW_TAG_VALUE));
+    select.value = currentTag || "";
+  }
+
   function renderTaskRow_(t, container) {
     var row = document.createElement("div");
     row.className = "item-row" + (t.done ? " done" : "");
@@ -604,6 +622,33 @@
     var label = document.createElement("div");
     label.className = "label";
     label.textContent = t.text;
+
+    // Click-to-assign project chip: shows the current project (or an
+    // invitation to set one), and swaps to a picker on click.
+    var tagChip = document.createElement("button");
+    tagChip.type = "button";
+    tagChip.className = "tag-chip" + (t.tag ? " set" : "");
+    tagChip.textContent = t.tag || "+ project";
+    tagChip.title = "Assign project";
+    tagChip.addEventListener("click", function () {
+      var sel = document.createElement("select");
+      sel.className = "tag-inline-select";
+      fillTagPickerOptions_(sel, t.tag);
+      sel.addEventListener("change", function () {
+        var val = sel.value;
+        if (val === NEW_TAG_VALUE) {
+          var created = addNewTag_(window.prompt("New project name:"));
+          val = created || "";
+        }
+        t.tag = val;
+        touch(); save(); scheduleSync();
+        populateTagSelects();
+        renderTasks();
+      });
+      row.replaceChild(sel, tagChip);
+      sel.focus();
+    });
+
     var del = document.createElement("button");
     del.className = "del";
     del.textContent = "✕";
@@ -615,6 +660,7 @@
     });
     row.appendChild(cb);
     row.appendChild(label);
+    row.appendChild(tagChip);
     row.appendChild(del);
     container.appendChild(row);
   }
