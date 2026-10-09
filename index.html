@@ -80,21 +80,17 @@
   }
   button.iconbtn:hover { background: var(--bg-sunken); color: var(--text); }
 
+  .view-tabs { display: flex; gap: 2px; background: var(--bg-sunken); border-radius: 8px; padding: 2px; margin-right: 2px; }
+  .tab-btn {
+    border: none; background: none; padding: 5px 13px; font-size: 12.5px; border-radius: 6px;
+    cursor: pointer; color: var(--text-dim); font-family: var(--font); font-weight: 600;
+  }
+  .tab-btn.active { background: var(--bg-panel); color: var(--accent); box-shadow: var(--shadow); }
+
   #app {
     display: flex;
     flex: 1;
     min-height: 0;
-  }
-  #sidebar {
-    width: 300px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-    background: var(--bg-panel);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 14px;
-    gap: 20px;
   }
   #main {
     flex: 1;
@@ -177,6 +173,12 @@
     color: var(--text-dim); padding: 8px 4px 3px; }
   .task-group-header:first-child { padding-top: 2px; }
 
+  /* Home overview */
+  #home-view { flex: 1; overflow-y: auto; padding: 20px; }
+  .home-inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  #home-summary { font-size: 13px; color: var(--text-dim); }
+  #home-summary strong { color: var(--text); font-weight: 600; }
+
   /* Chat */
   #chat-scroll {
     flex: 1; overflow-y: auto; padding: 20px 0;
@@ -258,12 +260,6 @@
 
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-  @media (max-width: 720px) {
-    #sidebar { position: fixed; top: 45px; bottom: 0; left: 0; width: 260px; z-index: 30;
-      transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: var(--shadow); }
-    #sidebar.open { transform: translateX(0); }
-  }
 </style>
 </head>
 <body>
@@ -273,55 +269,64 @@
   <div class="actions">
     <span id="sync-status" style="display:none;"></span>
     <button class="iconbtn" id="sync-now-btn" style="display:none;">Sync now</button>
-    <button class="iconbtn" id="menu-btn" style="display:none;">☰ Lists</button>
-    <button class="iconbtn" id="clear-chat-btn">Clear chat</button>
+    <div class="view-tabs">
+      <button class="tab-btn" id="home-tab-btn" style="display:none;">Home</button>
+      <button class="tab-btn" id="chat-tab-btn" style="display:none;">Chat</button>
+    </div>
+    <button class="iconbtn" id="clear-chat-btn" style="display:none;">Clear chat</button>
     <button class="iconbtn" id="settings-btn">Settings</button>
   </div>
 </header>
 
 <div id="app">
-  <aside id="sidebar">
-    <div>
-      <div class="panel-title">Today's Tasks</div>
-      <div class="card" id="tasks-card">
-        <div class="task-filter-row">
-          <select id="task-filter-select"></select>
-          <button class="iconbtn" id="delete-project-btn" style="display:none;">Delete project</button>
-        </div>
-        <div id="tasks-list"></div>
-        <div class="add-row">
-          <input type="text" id="task-input" placeholder="Add a task…" maxlength="200">
-          <select id="task-tag-select"></select>
-          <button id="task-add-btn">Add</button>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="panel-title">Habits</div>
-      <div class="card" id="habits-card">
-        <div id="habits-list"></div>
-        <div class="add-row">
-          <input type="text" id="habit-input" placeholder="Add a habit…" maxlength="200">
-          <button id="habit-add-btn">Add</button>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="panel-title">Backup</div>
-      <div class="card" style="display:flex; gap:6px;">
-        <button class="iconbtn" id="export-btn" style="flex:1;">Export data</button>
-        <button class="iconbtn" id="import-btn" style="flex:1;">Import data</button>
-      </div>
-      <input type="file" id="import-file" accept="application/json" style="display:none;">
-    </div>
-  </aside>
-
   <main id="main">
     <div id="welcome">
       <div class="welcome-card">
         <h2>Set up your assistant</h2>
         <p>This is a personal daily-planning assistant that talks to Claude directly from your browser. To use it you'll need an Anthropic API key — add one in Settings to get started.</p>
         <button class="btn-primary" id="welcome-settings-btn">Open Settings</button>
+      </div>
+    </div>
+
+    <div id="home-view" style="display:none;">
+      <div class="home-inner">
+        <div id="home-summary"></div>
+
+        <div>
+          <div class="panel-title">Today's Tasks</div>
+          <div class="card" id="tasks-card">
+            <div class="task-filter-row">
+              <select id="task-filter-select"></select>
+              <button class="iconbtn" id="delete-project-btn" style="display:none;">Delete project</button>
+            </div>
+            <div id="tasks-list"></div>
+            <div class="add-row">
+              <input type="text" id="task-input" placeholder="Add a task…" maxlength="200">
+              <select id="task-tag-select"></select>
+              <button id="task-add-btn">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel-title">Habits</div>
+          <div class="card" id="habits-card">
+            <div id="habits-list"></div>
+            <div class="add-row">
+              <input type="text" id="habit-input" placeholder="Add a habit…" maxlength="200">
+              <button id="habit-add-btn">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel-title">Backup</div>
+          <div class="card" style="display:flex; gap:6px;">
+            <button class="iconbtn" id="export-btn" style="flex:1;">Export data</button>
+            <button class="iconbtn" id="import-btn" style="flex:1;">Import data</button>
+          </div>
+          <input type="file" id="import-file" accept="application/json" style="display:none;">
+        </div>
       </div>
     </div>
 
@@ -445,6 +450,10 @@
   // ---------- DOM refs ----------
   var el = {
     welcome: document.getElementById("welcome"),
+    homeView: document.getElementById("home-view"),
+    homeSummary: document.getElementById("home-summary"),
+    homeTabBtn: document.getElementById("home-tab-btn"),
+    chatTabBtn: document.getElementById("chat-tab-btn"),
     chatScroll: document.getElementById("chat-scroll"),
     chatInner: document.getElementById("chat-inner"),
     composer: document.getElementById("composer"),
@@ -471,8 +480,6 @@
     exportBtn: document.getElementById("export-btn"),
     importBtn: document.getElementById("import-btn"),
     importFile: document.getElementById("import-file"),
-    menuBtn: document.getElementById("menu-btn"),
-    sidebar: document.getElementById("sidebar"),
     syncStatusHeader: document.getElementById("sync-status"),
     syncNowBtn: document.getElementById("sync-now-btn"),
     githubTokenInput: document.getElementById("github-token-input"),
@@ -520,14 +527,44 @@
     if (state.githubToken) pullState().then(function () { scheduleSync(true); });
   });
 
+  // ---------- View switching (Home overview <-> Chat) ----------
+  var currentView = "home";
+
+  function switchView(view) {
+    currentView = view;
+    el.homeView.style.display = view === "home" ? "block" : "none";
+    el.chatScroll.style.display = view === "chat" ? "block" : "none";
+    el.composer.style.display = view === "chat" ? "block" : "none";
+    el.clearChatBtn.style.display = view === "chat" ? "inline-block" : "none";
+    el.homeTabBtn.classList.toggle("active", view === "home");
+    el.chatTabBtn.classList.toggle("active", view === "chat");
+  }
+  el.homeTabBtn.addEventListener("click", function () { switchView("home"); });
+  el.chatTabBtn.addEventListener("click", function () { switchView("chat"); });
+
   function refreshMainView() {
     var ready = !!state.apiKey;
     el.welcome.style.display = ready ? "none" : "flex";
-    el.chatScroll.style.display = ready ? "block" : "none";
-    el.composer.style.display = ready ? "block" : "none";
-    if (window.innerWidth <= 720) el.menuBtn.style.display = ready ? "inline-block" : "none";
+    el.homeTabBtn.style.display = ready ? "inline-block" : "none";
+    el.chatTabBtn.style.display = ready ? "inline-block" : "none";
+    if (ready) {
+      switchView(currentView);
+    } else {
+      el.homeView.style.display = "none";
+      el.chatScroll.style.display = "none";
+      el.composer.style.display = "none";
+      el.clearChatBtn.style.display = "none";
+    }
     el.syncStatusHeader.style.display = state.githubToken ? "inline" : "none";
     el.syncNowBtn.style.display = state.githubToken ? "inline-block" : "none";
+  }
+
+  function renderHomeSummary() {
+    var openCount = state.tasks.filter(function (t) { return !t.done; }).length;
+    var doneToday = state.habits.filter(function (h) { return (h.doneDates || []).indexOf(todayStr()) !== -1; }).length;
+    var dateStr = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    var habitsBit = state.habits.length > 0 ? (" · <strong>" + doneToday + "/" + state.habits.length + "</strong> habits done today") : "";
+    el.homeSummary.innerHTML = dateStr + " — <strong>" + openCount + "</strong> task" + (openCount === 1 ? "" : "s") + " open" + habitsBit;
   }
 
   // ---------- Tasks + projects (tags) ----------
@@ -673,27 +710,24 @@
       hint.className = "empty-hint";
       hint.textContent = state.tasks.length === 0 ? "Nothing on your list yet." : "Nothing here.";
       el.tasksList.appendChild(hint);
-      return;
-    }
-
-    if (currentTaskFilter !== "all") {
+    } else if (currentTaskFilter !== "all") {
       visible.forEach(function (t) { renderTaskRow_(t, el.tasksList); });
-      return;
+    } else {
+      // "All tasks" view: group by project so it reads as organized-by-job.
+      var groups = state.tags.map(function (tag) { return { tag: tag, items: visible.filter(function (t) { return t.tag === tag; }) }; });
+      groups.push({ tag: "", items: visible.filter(function (t) { return !t.tag; }) });
+      groups.forEach(function (g) {
+        if (g.items.length === 0) return;
+        if (state.tags.length > 0) {
+          var header = document.createElement("div");
+          header.className = "task-group-header";
+          header.textContent = g.tag || "No project";
+          el.tasksList.appendChild(header);
+        }
+        g.items.forEach(function (t) { renderTaskRow_(t, el.tasksList); });
+      });
     }
-
-    // "All tasks" view: group by project so it reads as organized-by-job.
-    var groups = state.tags.map(function (tag) { return { tag: tag, items: visible.filter(function (t) { return t.tag === tag; }) }; });
-    groups.push({ tag: "", items: visible.filter(function (t) { return !t.tag; }) });
-    groups.forEach(function (g) {
-      if (g.items.length === 0) return;
-      if (state.tags.length > 0) {
-        var header = document.createElement("div");
-        header.className = "task-group-header";
-        header.textContent = g.tag || "No project";
-        el.tasksList.appendChild(header);
-      }
-      g.items.forEach(function (t) { renderTaskRow_(t, el.tasksList); });
-    });
+    renderHomeSummary();
   }
 
   function addTask() {
@@ -777,6 +811,7 @@
       row.appendChild(del);
       el.habitsList.appendChild(row);
     });
+    renderHomeSummary();
   }
 
   function addHabit() {
@@ -877,7 +912,7 @@
       "Today's date is " + dateStr + ".\n\n" +
       "The user's current task list:\n" + taskLines + "\n\n" +
       "The user's tracked habits:\n" + habitLines + "\n\n" +
-      "You can reference these naturally in conversation (e.g. nudge about an undone habit, help prioritize tasks), but you cannot directly edit them — if the user wants to add, complete, or remove something, tell them to use the sidebar checklist, or just acknowledge what they're doing.";
+      "You can reference these naturally in conversation (e.g. nudge about an undone habit, help prioritize tasks), but you cannot directly edit them — if the user wants to add, complete, or remove something, tell them to use the lists on the Home tab, or just acknowledge what they're doing.";
   }
 
   var sending = false;
@@ -969,11 +1004,6 @@
     state.messages = [];
     touch(); save(); scheduleSync();
     renderChat();
-  });
-
-  // ---------- Mobile sidebar toggle ----------
-  el.menuBtn.addEventListener("click", function () {
-    el.sidebar.classList.toggle("open");
   });
 
   // ---------- Cross-device sync (GitHub Gist as a private JSON store) ----------
