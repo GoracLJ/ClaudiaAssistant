@@ -284,7 +284,7 @@
       <div class="welcome-card">
         <h2>Set up your assistant</h2>
         <p>This is a personal daily-planning assistant that talks to Claude directly from your browser. To use it you'll need an Anthropic API key — add one in Settings to get started.</p>
-        <button class="btn-primary" id="welcome-settings-btn">Open Settings</button>
+          <button class="btn-primary" id="welcome-settings-btn">Open Settings</button>
       </div>
     </div>
 
@@ -295,16 +295,16 @@
         <div>
           <div class="panel-title">Today's Tasks</div>
           <div class="card" id="tasks-card">
+            <div class="add-row" style="margin-top:0; margin-bottom:10px;">
+              <input type="text" id="task-input" placeholder="Add a task…" maxlength="200">
+              <select id="task-tag-select"></select>
+              <button id="task-add-btn">Add</button>
+            </div>
             <div class="task-filter-row">
               <select id="task-filter-select"></select>
               <button class="iconbtn" id="delete-project-btn" style="display:none;">Delete project</button>
             </div>
             <div id="tasks-list"></div>
-            <div class="add-row">
-              <input type="text" id="task-input" placeholder="Add a task…" maxlength="200">
-              <select id="task-tag-select"></select>
-              <button id="task-add-btn">Add</button>
-            </div>
           </div>
         </div>
 
